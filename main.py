@@ -23,9 +23,10 @@ def generate_google_map_script(entity_type, id):
 def generate_ministries(num_ministries):
     ministries = []
     for i in range(1, num_ministries + 1):
-        name = f"{random.choice(ministry_prefixes)} {random.choice(ministry_domains)} #{random.randint(1000, 9999)}"
+        base_name = f"{random.choice(ministry_prefixes)} {random.choice(ministry_domains)}"
+        unique_name = f"{base_name} #{i}"  # use id to guarantee uniqueness
         script = generate_google_map_script("Ministry", i)
-        ministries.append((i, name, script))
+        ministries.append((i, unique_name, script))
     return ministries
 
 def generate_departments(ministries, departments_per_ministry):
@@ -33,9 +34,10 @@ def generate_departments(ministries, departments_per_ministry):
     dept_id = 1
     for ministry in ministries:
         for _ in range(departments_per_ministry):
-            name = f"{random.choice(department_keywords)} of {fake.word().capitalize()} #{random.randint(1000, 9999)}"
+            base_name = f"{random.choice(department_keywords)} of {fake.word().capitalize()}"
+            unique_name = f"{base_name} #{dept_id}"  # use id to guarantee uniqueness
             script = generate_google_map_script("Department", dept_id)
-            departments.append((dept_id, name, script, ministry[0]))
+            departments.append((dept_id, unique_name, script, ministry[0]))
             dept_id += 1
     return departments
 
