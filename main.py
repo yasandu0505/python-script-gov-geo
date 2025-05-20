@@ -5,6 +5,7 @@ import psycopg2
 from dotenv import load_dotenv
 from faker import Faker
 import matplotlib.pyplot as plt
+import math
 
 # Load DB credentials
 load_dotenv()
@@ -41,27 +42,38 @@ def generate_departments(ministries, departments_per_ministry):
             dept_id += 1
     return departments
 
-def upload_to_postgresql(ministries, departments):
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
+def upload_to_postgresql(ministries, departments, batch_size=50, sleep_time=0.2):
+    def chunked_upload(data, insert_query, is_ministry=True):
+        total = len(data)
+        for i in range(0, total, batch_size):
+            batch = data[i:i + batch_size]
+            try:
+                conn = psycopg2.connect(DATABASE_URL)
+                cursor = conn.cursor()
+                cursor.executemany(insert_query, batch)
+                conn.commit()
+                cursor.close()
+                conn.close()
+                label = "Ministry" if is_ministry else "Department"
+                print(f"✅ Uploaded {label} batch {i // batch_size + 1} / {math.ceil(total / batch_size)}")
+                time.sleep(sleep_time)
+            except psycopg2.OperationalError as e:
+                print(f"❌ Failed to upload batch {i // batch_size + 1}: {e}")
+                break  # or retry if you want
 
-    for m in ministries:
-        cursor.execute("""
-            INSERT INTO ministry (id, name, google_map_script)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (id) DO NOTHING;
-        """, m)
+    print("\n⏫ Uploading Ministries in Batches...")
+    chunked_upload(ministries, """
+        INSERT INTO ministry (id, name, google_map_script)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (id) DO NOTHING;
+    """, is_ministry=True)
 
-    for d in departments:
-        cursor.execute("""
-            INSERT INTO department (id, name, google_map_script, ministry_id)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (id) DO NOTHING;
-        """, d)
-
-    conn.commit()
-    cursor.close()
-    conn.close()
+    print("\n⏫ Uploading Departments in Batches...")
+    chunked_upload(departments, """
+        INSERT INTO department (id, name, google_map_script, ministry_id)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (id) DO NOTHING;
+    """, is_ministry=False)
 
 def main():
     results = []
