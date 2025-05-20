@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from faker import Faker
 import matplotlib.pyplot as plt
 import math
+import csv
 
 # Load DB credentials
 load_dotenv()
@@ -25,7 +26,7 @@ def generate_ministries(num_ministries):
     ministries = []
     for i in range(1, num_ministries + 1):
         base_name = f"{random.choice(ministry_prefixes)} {random.choice(ministry_domains)}"
-        unique_name = f"{base_name} #{i}"  # use id to guarantee uniqueness
+        unique_name = f"{base_name} - {i}"  # use id for uniqueness
         script = generate_google_map_script("Ministry", i)
         ministries.append((i, unique_name, script))
     return ministries
@@ -36,13 +37,28 @@ def generate_departments(ministries, departments_per_ministry):
     for ministry in ministries:
         for _ in range(departments_per_ministry):
             base_name = f"{random.choice(department_keywords)} of {fake.word().capitalize()}"
-            unique_name = f"{base_name} #{dept_id}"  # use id to guarantee uniqueness
+            unique_name = f"{base_name} - {dept_id}"
             script = generate_google_map_script("Department", dept_id)
             departments.append((dept_id, unique_name, script, ministry[0]))
             dept_id += 1
     return departments
 
-def upload_to_postgresql(ministries, departments, batch_size=50, sleep_time=0.2):
+def save_to_csv(ministries, departments):
+    os.makedirs("csv_output", exist_ok=True)
+
+    with open("csv_output/ministries.csv", mode='w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(["id", "name", "google_map_script"])
+        writer.writerows(ministries)
+
+    with open("csv_output/departments.csv", mode='w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(["id", "name", "google_map_script", "ministry_id"])
+        writer.writerows(departments)
+
+    print("📝 CSV files saved in 'csv_output/' folder.")
+
+def upload_to_postgresql(ministries, departments, batch_size=100, sleep_time=1):
     def chunked_upload(data, insert_query, is_ministry=True):
         total = len(data)
         for i in range(0, total, batch_size):
@@ -59,16 +75,16 @@ def upload_to_postgresql(ministries, departments, batch_size=50, sleep_time=0.2)
                 time.sleep(sleep_time)
             except psycopg2.OperationalError as e:
                 print(f"❌ Failed to upload batch {i // batch_size + 1}: {e}")
-                break  # or retry if you want
+                break
 
-    print("\n⏫ Uploading Ministries in Batches...")
+    print("\n⏫ Uploading Ministries...")
     chunked_upload(ministries, """
         INSERT INTO ministry (id, name, google_map_script)
         VALUES (%s, %s, %s)
         ON CONFLICT (id) DO NOTHING;
     """, is_ministry=True)
 
-    print("\n⏫ Uploading Departments in Batches...")
+    print("\n⏫ Uploading Departments...")
     chunked_upload(departments, """
         INSERT INTO department (id, name, google_map_script, ministry_id)
         VALUES (%s, %s, %s, %s)
@@ -91,6 +107,8 @@ def main():
         departments = generate_departments(ministries, departments_per_ministry)
         print(f"✅ Generated {len(ministries)} ministries and {len(departments)} departments.")
 
+        save_to_csv(ministries, departments)
+
         print("📤 Uploading to PostgreSQL...")
         start_time = time.time()
         upload_to_postgresql(ministries, departments)
@@ -106,7 +124,6 @@ def main():
         if cont != 'y':
             break
 
-    # Plot results
     print("\n📊 Plotting performance graph...")
     labels = [r[0] for r in results]
     times = [r[1] for r in results]
