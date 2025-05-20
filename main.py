@@ -16,23 +16,21 @@ def escape_quotes(s):
 def generate_google_map_script(entity_type, id):
     return f"<iframe src='https://maps.google.com/maps?q={entity_type}{id}&output=embed'></iframe>"
 
-# Generate ministries
-def generate_ministries(num_ministries=100):
+def generate_ministries(num_ministries):
     ministries = []
     for i in range(1, num_ministries + 1):
-        name = f"{random.choice(ministry_prefixes)} {random.choice(ministry_domains)}"
+        name = f"{random.choice(ministry_prefixes)} {random.choice(ministry_domains)} #{random.randint(1000, 9999)}"
         script = generate_google_map_script("Ministry", i)
         ministries.append((i, escape_quotes(name), escape_quotes(script)))
     return ministries
 
-# Generate departments
-def generate_departments(ministries, departments_per_ministry=10):
+def generate_departments(ministries, departments_per_ministry):
     departments = []
     dept_id = 1
     for ministry in ministries:
         ministry_id = ministry[0]
         for _ in range(departments_per_ministry):
-            name = f"{random.choice(department_keywords)} of {fake.word().capitalize()}"
+            name = f"{random.choice(department_keywords)} of {fake.word().capitalize()} #{random.randint(1000, 9999)}"
             script = generate_google_map_script("Department", dept_id)
             departments.append((dept_id, escape_quotes(name), escape_quotes(script), ministry_id))
             dept_id += 1
@@ -52,10 +50,17 @@ def generate_sql(ministries, departments):
 
 # Main execution
 def main():
+    try:
+        num_ministries = int(input("🔢 Enter number of ministries to generate: "))
+        departments_per_ministry = int(input("🔢 Enter number of departments per ministry: "))
+    except ValueError:
+        print("❌ Please enter valid integer values.")
+        return
+
     print("🚀 Generating ministries and departments...")
-    ministries = generate_ministries()
+    ministries = generate_ministries(num_ministries)
     print(f"✅ Generated {len(ministries)} ministries")
-    departments = generate_departments(ministries)
+    departments = generate_departments(ministries, departments_per_ministry)
     print(f"✅ Generated {len(departments)} departments")
     sql_output = generate_sql(ministries, departments)
 
