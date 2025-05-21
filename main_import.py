@@ -65,15 +65,15 @@ def import_to_neon():
         departments_df = pd.read_csv("csv_output/departments.csv")
 
         ministries_df.to_sql("ministry", engine, if_exists="append", index=False)
-        print("✅ Ministries imported into Neon.")
+        print("\n✅ Ministries imported into Neon.")
 
         departments_df.to_sql("department", engine, if_exists="append", index=False)
         print("✅ Departments imported into Neon.")
 
         end_time = time.time()  # ⏱️ End timing
-        duration_ms = int((end_time - start_time) * 1000)
+        duration_ms = int(((end_time - start_time) * 1000) / 1000)
 
-        print(f"⏱️ Total import time: {duration_ms} ms")
+        print(f"\n⏱️ Total import time: {duration_ms} s")
         print("✅ Data imported successfully into Neon.")
 
     except Exception as e:
@@ -82,18 +82,18 @@ def import_to_neon():
 # Main execution
 def main():
     try:
-        num_ministries = int(input("🔢 Enter number of ministries to generate: "))
+        num_ministries = int(input("\n🔢 Enter number of ministries to generate: "))
         departments_per_ministry = int(input("🔢 Enter number of departments per ministry: "))
     except ValueError:
         print("❌ Please enter valid integer values.")
         return
 
-    print("🚀 Generating ministries and departments...")
+    print("\n🚀 Generating ministries and departments...")
     ministries = generate_ministries(num_ministries)
     departments = generate_departments(ministries, departments_per_ministry)
 
-    print(f"✅ Generated {len(ministries)} ministries")
-    print(f"✅ Generated {len(departments)} departments")
+    print(f"\n✅ Generated {len(ministries)} ministries")
+    print(f"✅ Generated {len(departments)} departments\n")
 
     write_csv("csv_output/ministries.csv", ministries, ["id", "name", "google_map_script"])
     write_csv("csv_output/departments.csv", departments, ["id", "name", "google_map_script", "ministry_id"])
