@@ -66,6 +66,7 @@ def upload_to_postgresql(ministries, departments, batch_size=100, sleep_time=1):
             try:
                 conn = psycopg2.connect(DATABASE_URL)
                 cursor = conn.cursor()
+                print(insert_query)
                 cursor.executemany(insert_query, batch)
                 conn.commit()
                 cursor.close()
