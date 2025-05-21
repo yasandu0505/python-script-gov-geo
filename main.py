@@ -58,7 +58,7 @@ def save_to_csv(ministries, departments):
 
     print("📝 CSV files saved in 'csv_output/' folder.")
 
-def upload_to_postgresql(ministries, departments, batch_size=100, sleep_time=1):
+def upload_to_postgresql(ministries, departments, batch_size=5, sleep_time=0.5):
     def chunked_upload(data, insert_query, is_ministry=True):
         total = len(data)
         for i in range(0, total, batch_size):

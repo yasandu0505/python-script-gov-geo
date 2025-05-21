@@ -1,19 +1,26 @@
 import random
 import csv
 from faker import Faker
+import pandas as pd
+from sqlalchemy import create_engine
+import os
 
+# Initialize Faker
 fake = Faker()
+
+# Database connection URL (Neon)
+DATABASE_URL = "postgresql+psycopg2://neondb_owner:npg_hB62qQynzldf@ep-super-bush-a41t7p8m-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
 # Vocabulary for random names
 ministry_prefixes = ["Ministry of"]
 ministry_domains = ["Education", "Health", "Finance", "Technology", "Agriculture", "Defense", "Energy", "Environment", "Justice", "Transport", "Tourism", "Labor", "Foreign Affairs", "Science", "Culture"]
 department_keywords = ["Department of"]
 
-# Escape single quotes for safe CSV
+# Escape single quotes
 def escape_quotes(s):
     return s.replace("'", "''")
 
-# Simple Google Maps placeholder
+# Google Maps iframe placeholder
 def generate_google_map_script(entity_type, id):
     return f"<iframe src='https://maps.google.com/maps?q={entity_type}{id}&output=embed'></iframe>"
 
@@ -39,11 +46,28 @@ def generate_departments(ministries, departments_per_ministry):
 
 # Write to CSV
 def write_csv(filename, data, headers):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, mode='w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(headers)
         writer.writerows(data)
     print(f"📄 Data saved to '{filename}'")
+
+# Import CSV to Neon using pandas and sqlalchemy
+def import_to_neon():
+    try:
+        print("🚚 Importing data to Neon...")
+        engine = create_engine(DATABASE_URL)
+
+        ministries_df = pd.read_csv("csv_output/ministries.csv")
+        departments_df = pd.read_csv("csv_output/departments.csv")
+
+        ministries_df.to_sql("ministry", engine, if_exists="append", index=False)
+        departments_df.to_sql("department", engine, if_exists="append", index=False)
+
+        print("✅ Data imported successfully into Neon.")
+    except Exception as e:
+        print("❌ Error while importing to Neon:", e)
 
 # Main execution
 def main():
@@ -63,6 +87,8 @@ def main():
 
     write_csv("csv_output/ministries.csv", ministries, ["id", "name", "google_map_script"])
     write_csv("csv_output/departments.csv", departments, ["id", "name", "google_map_script", "ministry_id"])
+
+    import_to_neon()
 
 if __name__ == "__main__":
     main()
