@@ -4,6 +4,7 @@ from faker import Faker
 import pandas as pd
 from sqlalchemy import create_engine
 import os
+import time
 
 # Initialize Faker
 fake = Faker()
@@ -57,15 +58,24 @@ def write_csv(filename, data, headers):
 def import_to_neon():
     try:
         print("🚚 Importing data to Neon...")
+        start_time = time.time()  # Start timing
         engine = create_engine(DATABASE_URL)
 
         ministries_df = pd.read_csv("csv_output/ministries.csv")
         departments_df = pd.read_csv("csv_output/departments.csv")
 
         ministries_df.to_sql("ministry", engine, if_exists="append", index=False)
-        departments_df.to_sql("department", engine, if_exists="append", index=False)
+        print("✅ Ministries imported into Neon.")
 
+        departments_df.to_sql("department", engine, if_exists="append", index=False)
+        print("✅ Departments imported into Neon.")
+
+        end_time = time.time()  # ⏱️ End timing
+        duration_ms = int((end_time - start_time) * 1000)
+
+        print(f"⏱️ Total import time: {duration_ms} ms")
         print("✅ Data imported successfully into Neon.")
+
     except Exception as e:
         print("❌ Error while importing to Neon:", e)
 
