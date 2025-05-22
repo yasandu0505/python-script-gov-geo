@@ -5,6 +5,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 import os
 import time
+import matplotlib.pyplot as plt
 
 # Initialize Faker
 fake = Faker()
@@ -17,11 +18,9 @@ ministry_prefixes = ["Ministry of"]
 ministry_domains = ["Education", "Health", "Finance", "Technology", "Agriculture", "Defense", "Energy", "Environment", "Justice", "Transport", "Tourism", "Labor", "Foreign Affairs", "Science", "Culture"]
 department_keywords = ["Department of"]
 
-# Escape single quotes
 def escape_quotes(s):
     return s.replace("'", "''")
 
-# Google Maps iframe placeholder
 def generate_google_map_script(entity_type, id):
     return f"<iframe src='https://maps.google.com/maps?q={entity_type}{id}&output=embed'></iframe>"
 
@@ -45,60 +44,78 @@ def generate_departments(ministries, departments_per_ministry):
             dept_id += 1
     return departments
 
-# Write to CSV
 def write_csv(filename, data, headers):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, mode='w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(headers)
         writer.writerows(data)
-    print(f"📄 Data saved to '{filename}'")
 
-# Import CSV to Neon using pandas and sqlalchemy
 def import_to_neon():
     try:
-        print("🚚 Importing data to Neon...")
-        start_time = time.time()  # Start timing
         engine = create_engine(DATABASE_URL)
-
         ministries_df = pd.read_csv("csv_output/ministries.csv")
         departments_df = pd.read_csv("csv_output/departments.csv")
-
         ministries_df.to_sql("ministry", engine, if_exists="append", index=False)
-        print("\n✅ Ministries imported into Neon.")
-
         departments_df.to_sql("department", engine, if_exists="append", index=False)
-        print("✅ Departments imported into Neon.")
-
-        end_time = time.time()  # ⏱️ End timing
-        duration_ms = int(((end_time - start_time) * 1000) / 1000)
-
-        print(f"\n⏱️ Total import time: {duration_ms} s")
-        print("✅ Data imported successfully into Neon.")
-
     except Exception as e:
         print("❌ Error while importing to Neon:", e)
 
-# Main execution
+def plot_results(results):
+    plt.figure(figsize=(10, 6))
+    for dept_count in sorted(set(r[1] for r in results)):
+        x = [r[0] for r in results if r[1] == dept_count]
+        y = [r[2] for r in results if r[1] == dept_count]
+        plt.plot(x, y, marker='o', label=f'{dept_count} departments/ministery')
+
+    plt.title("📊 Neon Import Time vs. Number of Ministries")
+    plt.xlabel("Number of Ministries")
+    plt.ylabel("Import Time (s)")
+    plt.legend(title="Departments/Ministry")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
 def main():
     try:
-        num_ministries = int(input("\n🔢 Enter number of ministries to generate: "))
-        departments_per_ministry = int(input("🔢 Enter number of departments per ministry: "))
+        ministry_input = input("\n🔢 Enter comma-separated ministry counts to test (e.g. 10,20,30): ")
+        dept_input = input("🔢 Enter comma-separated department counts to test (e.g. 2,5,10): ")
+
+        ministry_counts = [int(x.strip()) for x in ministry_input.split(',')]
+        department_counts = [int(x.strip()) for x in dept_input.split(',')]
     except ValueError:
-        print("❌ Please enter valid integer values.")
+        print("❌ Invalid input. Please enter comma-separated integers.")
         return
 
-    print("\n🚀 Generating ministries and departments...")
-    ministries = generate_ministries(num_ministries)
-    departments = generate_departments(ministries, departments_per_ministry)
+    results = []
 
-    print(f"\n✅ Generated {len(ministries)} ministries")
-    print(f"✅ Generated {len(departments)} departments\n")
+    for num_ministries in ministry_counts:
+        for departments_per_ministry in department_counts:
+            print(f"\n🧪 Testing with {num_ministries} ministries and {departments_per_ministry} departments each...")
 
-    write_csv("csv_output/ministries.csv", ministries, ["id", "name", "google_map_script"])
-    write_csv("csv_output/departments.csv", departments, ["id", "name", "google_map_script", "ministry_id"])
+            ministries = generate_ministries(num_ministries)
+            departments = generate_departments(ministries, departments_per_ministry)
 
-    import_to_neon()
+            write_csv("csv_output/ministries.csv", ministries, ["id", "name", "google_map_script"])
+            write_csv("csv_output/departments.csv", departments, ["id", "name", "google_map_script", "ministry_id"])
+
+            start_time = time.time()
+            import_to_neon()
+            end_time = time.time()
+
+            duration = round(end_time - start_time, 2)
+            print(f"⏱️ Import time: {duration} seconds")
+            results.append((num_ministries, departments_per_ministry, duration))
+
+            # Ask user whether to continue or stop
+            decision = input("🛑 Do you want to stop here and see the results? (y/n): ").strip().lower()
+            if decision == "y":
+                print("\n📊 Generating performance graph...")
+                plot_results(results)
+                return
+
+    print("\n✅ All tests completed. Generating graph...")
+    plot_results(results)
 
 if __name__ == "__main__":
     main()
