@@ -76,11 +76,12 @@ def import_to_neon():
 def clear_neon_tables():
     try:
         engine = create_engine(DATABASE_URL)
-        with engine.connect() as conn:
+        with engine.begin() as conn:
             conn.execute(text("TRUNCATE TABLE department, ministry RESTART IDENTITY CASCADE;"))
             print("🧹 Tables truncated successfully.")
     except Exception as e:
         print("❌ Error while truncating tables:", e)
+
 
 def plot_performance(log):
     x = [f"{m}M-{d}D" for m, d, _ in log]
