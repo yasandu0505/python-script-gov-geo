@@ -6,12 +6,18 @@ from sqlalchemy import create_engine
 import os
 import time
 import matplotlib.pyplot as plt
+from dotenv import load_dotenv
+
 
 # Initialize Faker
 fake = Faker()
 
-# Database connection URL (Neon)
-DATABASE_URL = "postgresql+psycopg2://neondb_owner:npg_hB62qQynzldf@ep-super-bush-a41t7p8m-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
+# Load environment variables
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("❌ DATABASE_URL is not set in the .env file")
+
 
 # Vocabulary for random names
 ministry_prefixes = ["Ministry of"]
