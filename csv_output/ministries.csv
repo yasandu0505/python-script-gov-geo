@@ -1,0 +1,11 @@
+id,name,google_map_script
+1,Ministry of Agriculture - 1,<iframe src=''https://maps.google.com/maps?q=Ministry1&output=embed''></iframe>
+2,Ministry of Environment - 2,<iframe src=''https://maps.google.com/maps?q=Ministry2&output=embed''></iframe>
+3,Ministry of Transport - 3,<iframe src=''https://maps.google.com/maps?q=Ministry3&output=embed''></iframe>
+4,Ministry of Defense - 4,<iframe src=''https://maps.google.com/maps?q=Ministry4&output=embed''></iframe>
+5,Ministry of Tourism - 5,<iframe src=''https://maps.google.com/maps?q=Ministry5&output=embed''></iframe>
+6,Ministry of Justice - 6,<iframe src=''https://maps.google.com/maps?q=Ministry6&output=embed''></iframe>
+7,Ministry of Transport - 7,<iframe src=''https://maps.google.com/maps?q=Ministry7&output=embed''></iframe>
+8,Ministry of Science - 8,<iframe src=''https://maps.google.com/maps?q=Ministry8&output=embed''></iframe>
+9,Ministry of Education - 9,<iframe src=''https://maps.google.com/maps?q=Ministry9&output=embed''></iframe>
+10,Ministry of Culture - 10,<iframe src=''https://maps.google.com/maps?q=Ministry10&output=embed''></iframe>
