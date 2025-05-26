@@ -10,7 +10,7 @@ ministry_domains = ["Education", "Health", "Finance", "Technology", "Agriculture
 department_keywords = ["Department of"]
 
 # Escape single quotes for safe CSV
-def escape_quotes(s):
+def escape_quotes(s):   
     return s.replace("'", "''")
 
 # Simple Google Maps placeholder

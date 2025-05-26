@@ -12,9 +12,9 @@ departments_df = pd.read_csv("./csv_output/departments.csv")
 engine = create_engine(DATABASE_URL)
 
 # Insert data into the ministries table
-ministries_df.to_sql("ministries", engine, if_exists="append", index=False)
+ministries_df.to_sql("ministry", engine, if_exists="append", index=False)
 
 # Insert data into the departments table
-departments_df.to_sql("departments", engine, if_exists="append", index=False)
+departments_df.to_sql("department", engine, if_exists="append", index=False)
 
 print("Data imported successfully.")
